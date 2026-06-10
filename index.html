@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>🌈 ABC World — Kids Learning Adventure</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+:root {
+  --sky: #87CEEB;
+  --grass: #7DC242;
+  --sun: #FFD700;
+  --pink: #FF69B4;
+  --purple: #9B59B6;
+  --orange: #FF8C00;
+  --teal: #20B2AA;
+  --red: #E74C3C;
+}
+html,body { height:100%; overflow:hidden; }
+body {
+  background: linear-gradient(180deg, #87CEEB 0%, #B0E0FF 60%, #C8F0A0 100%);
+  font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', cursive, sans-serif;
+  user-select: none;
+}
+
+/* ── Animated clouds ── */
+.cloud { position:fixed; opacity:.8; animation:floatCloud linear infinite; z-index:0; font-size:2rem; }
+@keyframes floatCloud { from{transform:translateX(-200px)} to{transform:translateX(calc(100vw + 200px))} }
+
+/* ── App ── */
+#app { position:relative; z-index:1; height:100vh; display:flex; flex-direction:column; }
+
+/* ── Top bar ── */
+.topbar {
+  background:rgba(255,255,255,.75);
+  backdrop-filter:blur(8px);
+  padding:8px 14px;
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:3px solid #FFD700;
+}
+.logo { font-size:1.4rem; font-weight:900; color:#E74C3C; text-shadow:2px 2px 0 rgba(0,0,0,.15); }
+.logo span { color:#9B59B6; }
+.stars-count { font-size:1.1rem; font-weight:800; color:#FF8C00; display:flex; align-items:center; gap:4px; }
+
+/* ── Mode tabs ── */
+.tabs {
+  display:flex; gap:4px; padding:8px 10px;
+  overflow-x:auto; scrollbar-width:none;
+  background:rgba(255,255,255,.5);
+  border-bottom:2px solid rgba(255,215,0,.5);
+}
+.tabs::-webkit-scrollbar { display:none; }
+.tab {
+  flex-shrink:0;
+  padding:8px 14px; border-radius:20px; border:none;
+  font-family:inherit; font-size:.85rem; font-weight:800;
+  cursor:pointer; transition:all .15s;
+  background:rgba(255,255,255,.6); color:#444;
+}
+.tab.active { transform:scale(1.05); box-shadow:0 3px 10px rgba(0,0,0,.2); }
+.tab-abc.active  { background:linear-gradient(135deg,#FF69B4,#FF8C00); color:#fff; }
+.tab-nums.active { background:linear-gradient(135deg,#4ECDC4,#556270); color:#fff; }
+.tab-paint.active{ background:linear-gradient(135deg,#A8E063,#56AB2F); color:#fff; }
+.tab-rhyme.active{ background:linear-gradient(135deg,#F7971E,#FFD200); color:#333; }
+.tab-quiz.active { background:linear-gradient(135deg,#8E2DE2,#4A00E0); color:#fff; }
+.tab-animals.active { background:linear-gradient(135deg,#F09819,#EDDE5D); color:#333; }
+
+/* ── Content area ── */
+#content { flex:1; overflow-y:auto; overflow-x:hidden; padding:12px; }
+#content::-webkit-scrollbar { width:4px; }
+#content::-webkit-scrollbar-thumb { background:rgba(255,255,255,.5); border-radius:4px; }
+
+/* ── ABC Mode ── */
+.abc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(78px,1fr)); gap:8px; }
+.abc-card {
+  background:white; border-radius:18px;
+  padding:10px 6px; text-align:center;
+  cursor:pointer; transition:all .2s;
+  box-shadow:0 4px 12px rgba(0,0,0,.12);
+  border-bottom:4px solid;
+  min-height:90px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.abc-card:hover,.abc-card:active { transform:scale(1.08) rotate(-1deg); box-shadow:0 8px 20px rgba(0,0,0,.2); }
+.abc-letter { font-size:2.2rem; font-weight:900; line-height:1; }
+.abc-word   { font-size:.65rem; font-weight:700; color:#555; margin-top:3px; }
+.abc-emoji  { font-size:1.4rem; }
+
+/* ── Letter detail panel ── */
+#letter-panel {
+  position:fixed; inset:0; z-index:200;
+  background:rgba(0,0,0,.6); backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center;
+}
+.letter-modal {
+  background:white; border-radius:28px; padding:24px;
+  text-align:center; width:min(340px,88vw);
+  animation:bounceIn .35s ease-out;
+}
+@keyframes bounceIn { from{transform:scale(.5);opacity:0} to{transform:scale(1);opacity:1} }
+.letter-big { font-size:5rem; font-weight:900; line-height:1; }
+.letter-word { font-size:1.3rem; font-weight:700; color:#555; margin:6px 0; }
+.letter-emoji { font-size:4rem; margin:10px 0; }
+.letter-sentence { font-size:.95rem; color:#777; margin-bottom:12px; font-style:italic; }
+.say-btn {
+  background:linear-gradient(135deg,#FF69B4,#FF8C00);
+  color:white; border:none; border-radius:50px;
+  padding:12px 28px; font-family:inherit;
+  font-size:1rem; font-weight:800; cursor:pointer;
+  transition:all .15s; margin:4px;
+}
+.say-btn:hover { transform:scale(1.05); }
+
+/* ── Tracing canvas ── */
+#trace-canvas {
+  border: 3px dashed #ccc; border-radius:12px;
+  cursor:crosshair; touch-action:none;
+  margin:8px auto; display:block;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 28px,
+    #f0f0f0 28px, #f0f0f0 29px
+  );
+}
+
+/* ── Paint mode ── */
+.paint-wrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.color-palette { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+.color-swatch {
+  width:34px; height:34px; border-radius:50%;
+  cursor:pointer; border:3px solid transparent;
+  transition:all .15s; box-shadow:0 2px 6px rgba(0,0,0,.2);
+}
+.color-swatch.active { border-color:#333; transform:scale(1.2); }
+.brush-sizes { display:flex; gap:6px; align-items:center; }
+.brush-btn {
+  border-radius:50%; background:#333; cursor:pointer;
+  border:2px solid transparent; transition:all .15s;
+}
+.brush-btn.active { border-color:#FF69B4; transform:scale(1.1); }
+#paint-canvas {
+  background:white; border-radius:16px;
+  box-shadow:0 4px 20px rgba(0,0,0,.15);
+  cursor:crosshair; touch-action:none;
+  max-width:100%; border:3px solid #FFD700;
+}
+.paint-tools { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+.paint-btn {
+  padding:8px 14px; border-radius:20px; border:none;
+  font-family:inherit; font-size:.8rem; font-weight:700;
+  cursor:pointer; background:rgba(255,255,255,.8);
+  transition:all .15s; box-shadow:0 2px 6px rgba(0,0,0,.15);
+}
+.paint-btn:hover { transform:scale(1.05); background:white; }
+
+/* ── Paint stickers ── */
+.sticker-grid { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:4px; }
+.sticker { font-size:1.6rem; cursor:pointer; padding:4px; border-radius:8px; transition:all .15s; }
+.sticker:hover,.sticker.sel-sticker { background:rgba(255,215,0,.3); transform:scale(1.2); }
+
+/* ── Rhymes ── */
+.rhyme-card {
+  background:white; border-radius:20px;
+  padding:20px; margin-bottom:12px;
+  box-shadow:0 4px 16px rgba(0,0,0,.1);
+  border-left:5px solid;
+  cursor:pointer; transition:all .15s;
+}
+.rhyme-card:hover { transform:translateX(4px); }
+.rhyme-title { font-size:1.1rem; font-weight:900; margin-bottom:8px; }
+.rhyme-text { font-size:.9rem; line-height:2; color:#444; white-space:pre-line; }
+.rhyme-emoji { font-size:2.5rem; float:right; margin-left:10px; }
+
+/* ── Quiz mode ── */
+.quiz-card {
+  background:white; border-radius:24px;
+  padding:20px; text-align:center;
+  box-shadow:0 6px 24px rgba(0,0,0,.12);
+}
+.quiz-emoji { font-size:5rem; margin:10px 0; animation:wiggle 2s ease-in-out infinite; }
+@keyframes wiggle { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
+.quiz-question { font-size:1.1rem; font-weight:800; color:#333; margin-bottom:16px; }
+.quiz-options { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.quiz-opt {
+  padding:14px 10px; border-radius:16px; border:3px solid #ddd;
+  font-size:1.1rem; font-weight:800; cursor:pointer;
+  background:white; font-family:inherit;
+  transition:all .15s;
+}
+.quiz-opt:hover { border-color:#FF69B4; background:#FFF0F8; transform:scale(1.02); }
+.quiz-opt.correct { background:#C8F0A0; border-color:#56AB2F; animation:correctPop .4s ease; }
+.quiz-opt.wrong   { background:#FFB3B3; border-color:#E74C3C; animation:wrongShake .3s ease; }
+@keyframes correctPop { 0%{transform:scale(1)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
+@keyframes wrongShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+.quiz-progress { text-align:right; font-size:.8rem; color:#888; margin-bottom:8px; }
+.quiz-feedback { font-size:1.5rem; margin-top:12px; min-height:2rem; }
+.quiz-score-display { font-size:1rem; font-weight:800; color:#FF8C00; }
+
+/* ── Animals ── */
+.animal-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:10px; }
+.animal-card {
+  background:white; border-radius:18px;
+  padding:12px 6px; text-align:center;
+  cursor:pointer; transition:all .2s;
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
+  border-bottom:4px solid;
+}
+.animal-card:hover,.animal-card:active { transform:scale(1.1); }
+.animal-emoji { font-size:2.8rem; }
+.animal-name  { font-size:.7rem; font-weight:800; color:#555; margin-top:4px; }
+
+/* ── Star toast ── */
+.star-toast {
+  position:fixed; top:60px; left:50%; transform:translateX(-50%);
+  background:linear-gradient(135deg,#FFD700,#FF8C00);
+  color:white; font-weight:900; font-size:1.2rem;
+  padding:10px 24px; border-radius:50px;
+  box-shadow:0 6px 20px rgba(255,140,0,.5);
+  z-index:999; animation:toastIn .4s ease-out;
+}
+@keyframes toastIn {
+  from{transform:translateX(-50%) translateY(-30px);opacity:0}
+  to{transform:translateX(-50%) translateY(0);opacity:1}
+}
+
+/* ── Bottom nav ── */
+.bottom-nav {
+  background:rgba(255,255,255,.85);
+  backdrop-filter:blur(8px);
+  padding:6px 8px;
+  border-top:3px solid #FFD700;
+  display:flex; justify-content:space-around;
+}
+.bnav-btn {
+  display:flex; flex-direction:column; align-items:center;
+  font-size:.6rem; font-weight:800; color:#666;
+  background:none; border:none; cursor:pointer;
+  padding:4px 8px; border-radius:12px;
+  transition:all .15s;
+}
+.bnav-btn span:first-child { font-size:1.3rem; }
+.bnav-btn.active { color:#E74C3C; background:rgba(231,76,60,.1); }
+</style>
+</head>
+<body>
+
+<!-- Floating clouds -->
+<div class="cloud" style="top:8%;animation-duration:25s;animation-delay:0s">☁️</div>
+<div class="cloud" style="top:15%;animation-duration:32s;animation-delay:-10s;font-size:1.5rem">☁️</div>
+<div class="cloud" style="top:5%;animation-duration:20s;animation-delay:-5s;font-size:1rem;opacity:.5">☁️</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="logo">🌈 ABC <span>World</span></div>
+    <div class="stars-count">⭐ <span id="star-total">0</span> stars</div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab tab-abc active" onclick="setMode('abc')">🔤 Letters</button>
+    <button class="tab tab-nums"       onclick="setMode('numbers')">🔢 Numbers</button>
+    <button class="tab tab-paint"      onclick="setMode('paint')">🎨 Paint</button>
+    <button class="tab tab-rhyme"      onclick="setMode('rhyme')">🎵 Rhymes</button>
+    <button class="tab tab-quiz"       onclick="setMode('quiz')">🧠 Quiz</button>
+    <button class="tab tab-animals"    onclick="setMode('animals')">🦁 Animals</button>
+  </div>
+
+  <div id="content"></div>
+</div>
+
+<!-- Letter detail panel (hidden) -->
+<div id="letter-panel" style="display:none">
+  <div class="letter-modal">
+    <div id="lp-letter" class="letter-big"></div>
+    <div id="lp-both"   class="letter-word"></div>
+    <div id="lp-emoji"  class="letter-emoji"></div>
+    <div id="lp-word"   class="letter-word" style="font-size:1.1rem;color:#333"></div>
+    <div id="lp-sent"   class="letter-sentence"></div>
+    <canvas id="trace-canvas" width="280" height="120"></canvas>
+    <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:10px">
+      <button class="say-btn" onclick="speakLetter()">🔊 Say it!</button>
+      <button class="say-btn" style="background:linear-gradient(135deg,#4ECDC4,#556270)" onclick="speakWord()">🗣️ Say word</button>
+      <button class="say-btn" style="background:linear-gradient(135deg,#A8E063,#56AB2F)" onclick="clearTrace()">✏️ Clear</button>
+    </div>
+    <button class="say-btn" style="background:#ddd;color:#333;width:100%" onclick="closeLetter()">✖ Close</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  ABC WORLD — Kids Learning Game
+// ═══════════════════════════════════════════════════════════════
+
+const LETTERS = [
+  {l:'A',w:'Apple',  e:'🍎',s:'An apple a day keeps the doctor away!',  c:'#E74C3C'},
+  {l:'B',w:'Ball',   e:'⚽',s:'Bounce the ball with me!',                c:'#E67E22'},
+  {l:'C',w:'Cat',    e:'🐱',s:'The cat sat on the mat.',                 c:'#F1C40F'},
+  {l:'D',w:'Dog',    e:'🐶',s:'Dogs are our best friends!',              c:'#2ECC71'},
+  {l:'E',w:'Elephant',e:'🐘',s:'The elephant is very big!',             c:'#1ABC9C'},
+  {l:'F',w:'Fish',   e:'🐟',s:'Fish swim in the sea.',                   c:'#3498DB'},
+  {l:'G',w:'Grapes', e:'🍇',s:'Purple grapes are so sweet!',            c:'#9B59B6'},
+  {l:'H',w:'House',  e:'🏠',s:'Home sweet home!',                       c:'#E74C3C'},
+  {l:'I',w:'Ice cream',e:'🍦',s:'I love ice cream!',                    c:'#3498DB'},
+  {l:'J',w:'Jellyfish',e:'🪼',s:'Jellyfish float in the ocean.',        c:'#FF69B4'},
+  {l:'K',w:'Kite',   e:'🪁',s:'Let\'s fly a kite in the sky!',          c:'#E67E22'},
+  {l:'L',w:'Lion',   e:'🦁',s:'The lion roars loudly!',                 c:'#F1C40F'},
+  {l:'M',w:'Moon',   e:'🌙',s:'The moon shines at night.',              c:'#9B59B6'},
+  {l:'N',w:'Nest',   e:'🐦',s:'Birds live in a nest.',                  c:'#2ECC71'},
+  {l:'O',w:'Orange', e:'🍊',s:'Oranges are juicy and round!',           c:'#E67E22'},
+  {l:'P',w:'Penguin',e:'🐧',s:'Penguins live in the cold!',             c:'#3498DB'},
+  {l:'Q',w:'Queen',  e:'👑',s:'The queen wears a golden crown!',        c:'#F1C40F'},
+  {l:'R',w:'Rainbow',e:'🌈',s:'Rainbows have seven colours!',           c:'#E74C3C'},
+  {l:'S',w:'Sun',    e:'☀️',s:'The sun gives us light and warmth!',     c:'#F1C40F'},
+  {l:'T',w:'Tiger',  e:'🐯',s:'The tiger has orange stripes!',          c:'#E67E22'},
+  {l:'U',w:'Umbrella',e:'☂️',s:'Use an umbrella in the rain!',         c:'#9B59B6'},
+  {l:'V',w:'Violin', e:'🎻',s:'Play beautiful music on a violin!',      c:'#E74C3C'},
+  {l:'W',w:'Whale',  e:'🐋',s:'Whales are the biggest animals!',        c:'#3498DB'},
+  {l:'X',w:'Xylophone',e:'🎵',s:'Play music on the xylophone!',        c:'#9B59B6'},
+  {l:'Y',w:'Yak',    e:'🦬',s:'The yak lives high in the mountains!',   c:'#2ECC71'},
+  {l:'Z',w:'Zebra',  e:'🦓',s:'Zebras have black and white stripes!',   c:'#1ABC9C'},
+];
+
+const NUMBERS = [
+  {n:'1',w:'One',   e:'🌟',s:'One shining star in the sky'},
+  {n:'2',w:'Two',   e:'🐦🐦',s:'Two little birds on a tree'},
+  {n:'3',w:'Three', e:'🍎🍎🍎',s:'Three red apples on a plate'},
+  {n:'4',w:'Four',  e:'🌸🌸🌸🌸',s:'Four pretty flowers in a row'},
+  {n:'5',w:'Five',  e:'🐟🐟🐟🐟🐟',s:'Five fish swimming in the pond'},
+  {n:'6',w:'Six',   e:'⭐⭐⭐⭐⭐⭐',s:'Six bright stars twinkling above'},
+  {n:'7',w:'Seven', e:'🌈',s:'Seven colours in a rainbow'},
+  {n:'8',w:'Eight', e:'🐙',s:'An octopus has eight arms!'},
+  {n:'9',w:'Nine',  e:'🐱🐱🐱🐱🐱🐱🐱🐱🐱',s:'Nine playful kittens'},
+  {n:'10',w:'Ten',  e:'🤲',s:'Count all ten fingers on your hands!'},
+];
+
+const RHYMES = [
+  {title:"Twinkle Twinkle",e:'⭐',c:'#9B59B6',
+  text:`Twinkle, twinkle, little star,\nHow I wonder what you are!\nUp above the world so high,\nLike a diamond in the sky.\n\nTwinkle, twinkle, little star,\nHow I wonder what you are!`},
+  {title:"Baa Baa Black Sheep",e:'🐑',c:'#555',
+  text:`Baa, baa, black sheep,\nHave you any wool?\nYes, sir, yes, sir,\nThree bags full!\n\nOne for my master,\nOne for my dame,\nAnd one for the little boy\nWho lives down the lane.`},
+  {title:"Jack and Jill",e:'🪣',c:'#3498DB',
+  text:`Jack and Jill went up the hill\nTo fetch a pail of water.\nJack fell down and broke his crown,\nAnd Jill came tumbling after.\n\nUp Jack got, and home did trot,\nAs fast as he could caper.\nHe went to bed to mend his head\nWith vinegar and brown paper.`},
+  {title:"Humpty Dumpty",e:'🥚',c:'#E67E22',
+  text:`Humpty Dumpty sat on a wall,\nHumpty Dumpty had a great fall.\nAll the King's horses and all the King's men\nCouldn't put Humpty together again.`},
+  {title:"Incy Wincy Spider",e:'🕷️',c:'#555',
+  text:`Incy Wincy Spider climbed up the spout,\nDown came the rain and washed the spider out.\nOut came the sunshine and dried up all the rain,\nSo Incy Wincy Spider climbed up the spout again!`},
+  {title:"Old MacDonald",e:'🚜',c:'#2ECC71',
+  text:`Old MacDonald had a farm, E-I-E-I-O!\nAnd on his farm he had a cow, E-I-E-I-O!\nWith a moo-moo here and a moo-moo there,\nHere a moo, there a moo, everywhere a moo-moo!\nOld MacDonald had a farm, E-I-E-I-O!`},
+  {title:"Rain Rain Go Away",e:'🌧️',c:'#3498DB',
+  text:`Rain, rain, go away,\nCome again another day.\nLittle children want to play,\nRain, rain, go away!\n\nSun, sun, come and stay,\nLet us play the whole long day!`},
+  {title:"ABC Song",e:'🔤',c:'#E74C3C',
+  text:`A B C D E F G,\nH I J K L M N O P,\nQ R S, T U V,\nW X Y and Z!\n\nNow I know my ABCs,\nNext time won't you sing with me?`},
+];
+
+const ANIMALS = [
+  {e:'🐶',n:'Dog',    s:'Woof!',  fact:'Dogs can hear sounds humans cannot!'},
+  {e:'🐱',n:'Cat',    s:'Meow!',  fact:'Cats sleep up to 16 hours a day!'},
+  {e:'🐭',n:'Mouse',  s:'Squeak!',fact:'Mice have very good memory!'},
+  {e:'🐹',n:'Hamster',s:'Squeak!',fact:'Hamsters can run 8km at night!'},
+  {e:'🐰',n:'Rabbit', s:'*thump*',fact:'Baby rabbits are called kittens!'},
+  {e:'🦊',n:'Fox',    s:'Yip!',   fact:'Foxes are very clever animals!'},
+  {e:'🐻',n:'Bear',   s:'Growl!', fact:'Bears hibernate in winter!'},
+  {e:'🐼',n:'Panda',  s:'Roar!',  fact:'Pandas eat bamboo all day long!'},
+  {e:'🐨',n:'Koala',  s:'Grunt!', fact:'Koalas sleep 18-22 hours a day!'},
+  {e:'🐯',n:'Tiger',  s:'Roar!',  fact:'No two tigers have the same stripes!'},
+  {e:'🦁',n:'Lion',   s:'Roar!',  fact:'Lions are called the King of Jungle!'},
+  {e:'🐮',n:'Cow',    s:'Moo!',   fact:'Cows have best friends in the herd!'},
+  {e:'🐷',n:'Pig',    s:'Oink!',  fact:'Pigs are smarter than dogs!'},
+  {e:'🐸',n:'Frog',   s:'Ribbit!',fact:'Frogs drink water through their skin!'},
+  {e:'🐵',n:'Monkey', s:'Ooh-ooh!',fact:'Monkeys are our closest relatives!'},
+  {e:'🐔',n:'Chicken',s:'Cluck!', fact:'Chickens can remember 100 faces!'},
+  {e:'🐧',n:'Penguin',s:'Honk!',  fact:'Penguins mate for life!'},
+  {e:'🦆',n:'Duck',   s:'Quack!', fact:'Ducks always swim in a line!'},
+  {e:'🦅',n:'Eagle',  s:'Screech!',fact:'Eagles can spot prey from 2 miles away!'},
+  {e:'🦉',n:'Owl',    s:'Hoot!',  fact:'Owls can turn their heads 270 degrees!'},
+  {e:'🐊',n:'Croc',   s:'Hiss!',  fact:'Crocodiles are 200 million years old!'},
+  {e:'🐢',n:'Turtle', s:'...',    fact:'Turtles can live over 100 years!'},
+  {e:'🐍',n:'Snake',  s:'Hiss!',  fact:'Snakes smell with their tongues!'},
+  {e:'🦋',n:'Butterfly',s:'...',  fact:'Butterflies taste with their feet!'},
+  {e:'🐝',n:'Bee',    s:'Buzz!',  fact:'Bees communicate by dancing!'},
+  {e:'🐘',n:'Elephant',s:'Trumpet!',fact:'Elephants never forget!'},
+  {e:'🦒',n:'Giraffe',s:'...',   fact:'Giraffes have the same neck bones as humans!'},
+  {e:'🦓',n:'Zebra',  s:'Bark!',  fact:'Every zebra has unique stripes!'},
+  {e:'🦛',n:'Rhino',  s:'Grunt!', fact:'A rhino\'s horn is made of hair!'},
+  {e:'🐬',n:'Dolphin',s:'Click!', fact:'Dolphins call each other by name!'},
+];
+
+// QUIZ questions
+const QUIZ_QUESTIONS = [
+  ...LETTERS.map(l=>({
+    type:'letter', q:`What does "${l.l}" stand for?`,
+    emoji:l.e, correct:l.w,
+    wrong:LETTERS.filter(x=>x.l!==l.l).sort(()=>Math.random()-.5).slice(0,3).map(x=>x.w)
+  })),
+  ...ANIMALS.slice(0,15).map(a=>({
+    type:'animal', q:`What sound does this make?`,
+    emoji:a.e, correct:a.s,
+    wrong:ANIMALS.filter(x=>x.n!==a.n).sort(()=>Math.random()-.5).slice(0,3).map(x=>x.s)
+  })),
+  ...NUMBERS.map(n=>({
+    type:'number', q:`How many objects are shown? ${n.e}`,
+    emoji:n.n, correct:n.w,
+    wrong:NUMBERS.filter(x=>x.n!==n.n).sort(()=>Math.random()-.5).slice(0,3).map(x=>x.w)
+  })),
+];
+
+// ── State ─────────────────────────────────────────────────────
+let mode = 'abc';
+let totalStars = parseInt(localStorage.getItem('kids_stars')||'0');
+let paintColor = '#E74C3C';
+let paintSize = 12;
+let isEraser = false;
+let selectedSticker = null;
+let quizIndex = 0;
+let quizScore = 0;
+let currentLetter = null;
+let tracePainting = false;
+let paintDrawing = false;
+let traceCtx = null;
+let paintCtx = null;
+
+function addStars(n){
+  totalStars += n;
+  localStorage.setItem('kids_stars',totalStars);
+  document.getElementById('star-total').textContent = totalStars;
+  const toast = document.createElement('div');
+  toast.className='star-toast';
+  toast.textContent=`⭐ +${n} star${n>1?'s':''}!`;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),2000);
+}
+
+// ── Speak ─────────────────────────────────────────────────────
+function speak(text, rate=0.85, pitch=1.2){
+  if(!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate=rate; u.pitch=pitch; u.lang='en-US';
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+function speakLetter(){ if(currentLetter) speak(currentLetter.l, 0.7, 1.3); }
+function speakWord(){   if(currentLetter) speak(currentLetter.w, 0.85, 1.2); }
+
+// ── Modes ─────────────────────────────────────────────────────
+function setMode(m){
+  mode=m;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const tabMap={'abc':0,'numbers':1,'paint':2,'rhyme':3,'quiz':4,'animals':5};
+  document.querySelectorAll('.tab')[tabMap[m]]?.classList.add('active');
+  render();
+}
+
+function render(){
+  const c = document.getElementById('content');
+  if(mode==='abc')     renderABC(c);
+  else if(mode==='numbers') renderNumbers(c);
+  else if(mode==='paint')   renderPaint(c);
+  else if(mode==='rhyme')   renderRhyme(c);
+  else if(mode==='quiz')    renderQuiz(c);
+  else if(mode==='animals') renderAnimals(c);
+}
+
+// ── ABC ───────────────────────────────────────────────────────
+function renderABC(c){
+  c.innerHTML=`<p style="text-align:center;font-weight:800;font-size:1rem;color:#555;margin-bottom:10px">
+    Tap any letter to learn more! 🎉</p><div class="abc-grid" id="abc-grid"></div>`;
+  const grid=document.getElementById('abc-grid');
+  LETTERS.forEach(l=>{
+    const d=document.createElement('div');
+    d.className='abc-card';
+    d.style.borderBottomColor=l.c;
+    d.innerHTML=`<div class="abc-letter" style="color:${l.c}">${l.l}</div>
+      <div class="abc-emoji">${l.e}</div>
+      <div class="abc-word">${l.w}</div>`;
+    d.onclick=()=>openLetter(l);
+    grid.appendChild(d);
+  });
+}
+
+function openLetter(l){
+  currentLetter=l;
+  document.getElementById('lp-letter').textContent=l.l;
+  document.getElementById('lp-letter').style.color=l.c;
+  document.getElementById('lp-both').textContent=`${l.l} / ${l.l.toLowerCase()}`;
+  document.getElementById('lp-emoji').textContent=l.e;
+  document.getElementById('lp-word').textContent=l.w;
+  document.getElementById('lp-sent').textContent=l.s;
+  document.getElementById('letter-panel').style.display='flex';
+
+  // Setup trace canvas
+  const canvas=document.getElementById('trace-canvas');
+  traceCtx=canvas.getContext('2d');
+  clearTrace();
+  // Draw guide letter
+  traceCtx.globalAlpha=0.12;
+  traceCtx.font='bold 90px sans-serif';
+  traceCtx.fillStyle=l.c;
+  traceCtx.textAlign='center';
+  traceCtx.fillText(l.l, canvas.width/2, 95);
+  traceCtx.globalAlpha=1;
+
+  // Touch/mouse trace
+  const draw=(x,y)=>{
+    if(!tracePainting)return;
+    traceCtx.lineWidth=6; traceCtx.lineCap='round';
+    traceCtx.strokeStyle=l.c;
+    traceCtx.lineTo(x,y); traceCtx.stroke();
+  };
+  canvas.onmousedown=e=>{tracePainting=true;traceCtx.beginPath();traceCtx.moveTo(e.offsetX,e.offsetY);};
+  canvas.onmousemove=e=>draw(e.offsetX,e.offsetY);
+  canvas.onmouseup=()=>{tracePainting=false;};
+  canvas.ontouchstart=e=>{e.preventDefault();tracePainting=true;const r=canvas.getBoundingClientRect();const t=e.touches[0];traceCtx.beginPath();traceCtx.moveTo(t.clientX-r.left,t.clientY-r.top);};
+  canvas.ontouchmove=e=>{e.preventDefault();const r=canvas.getBoundingClientRect();const t=e.touches[0];draw(t.clientX-r.left,t.clientY-r.top);};
+  canvas.ontouchend=()=>{tracePainting=false;};
+
+  speak(l.l, 0.7, 1.3);
+  addStars(1);
+}
+
+function clearTrace(){
+  if(!traceCtx) return;
+  const canvas=document.getElementById('trace-canvas');
+  traceCtx.clearRect(0,0,canvas.width,canvas.height);
+  if(currentLetter){
+    traceCtx.globalAlpha=0.12;
+    traceCtx.font='bold 90px sans-serif';
+    traceCtx.fillStyle=currentLetter.c;
+    traceCtx.textAlign='center';
+    traceCtx.fillText(currentLetter.l, canvas.width/2, 95);
+    traceCtx.globalAlpha=1;
+  }
+}
+function closeLetter(){
+  document.getElementById('letter-panel').style.display='none';
+  currentLetter=null;
+}
+
+// ── Numbers ───────────────────────────────────────────────────
+function renderNumbers(c){
+  c.innerHTML='';
+  const cols=['#E74C3C','#E67E22','#F1C40F','#2ECC71','#1ABC9C','#3498DB','#9B59B6','#E74C3C','#E67E22','#F1C40F'];
+  NUMBERS.forEach((n,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText=`background:white;border-radius:20px;padding:18px;margin-bottom:10px;border-left:6px solid ${cols[i]};box-shadow:0 4px 14px rgba(0,0,0,.1);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:14px`;
+    card.innerHTML=`<div style="font-size:3rem;font-weight:900;color:${cols[i]};min-width:60px;text-align:center">${n.n}</div>
+      <div>
+        <div style="font-size:1.1rem;font-weight:800">${n.w}</div>
+        <div style="font-size:1.5rem;margin:4px 0">${n.e}</div>
+        <div style="font-size:.85rem;color:#666;font-style:italic">${n.s}</div>
+      </div>`;
+    card.onclick=()=>{
+      speak(`${n.n}. ${n.w}. ${n.s}`, 0.85, 1.1);
+      addStars(1);
+      card.style.transform='scale(1.02)';
+      setTimeout(()=>card.style.transform='',300);
+    };
+    c.appendChild(card);
+  });
+}
+
+// ── Paint ─────────────────────────────────────────────────────
+const PAINT_COLORS=['#E74C3C','#E67E22','#F1C40F','#2ECC71','#1ABC9C','#3498DB','#9B59B6','#FF69B4','#FFFFFF','#000000','#8B4513','#808080'];
+const STICKERS=['🌟','☀️','🌈','🦋','🌸','🎈','🎉','⭐','🍎','🐱','🐶','🦄','🌙','🎵','❤️','🌺'];
+
+function renderPaint(c){
+  c.innerHTML=`
+<div class="paint-wrap">
+  <div class="color-palette" id="palette"></div>
+  <div class="brush-sizes" id="brushes">
+    <span style="font-size:.8rem;font-weight:700;color:#555">Brush:</span>
+  </div>
+  <div class="paint-tools">
+    <button class="paint-btn" onclick="toggleEraser()">🧹 Eraser</button>
+    <button class="paint-btn" onclick="clearPaint()">🗑️ Clear</button>
+    <button class="paint-btn" onclick="savePaint()">💾 Save</button>
+    <button class="paint-btn" onclick="fillCanvas()">🪣 Fill</button>
+  </div>
+  <canvas id="paint-canvas" width="360" height="320"></canvas>
+  <div style="font-size:.8rem;font-weight:700;color:#555;margin-top:4px">🌟 Stickers</div>
+  <div class="sticker-grid" id="sticker-grid"></div>
+</div>`;
+
+  // Palette
+  const pal=document.getElementById('palette');
+  PAINT_COLORS.forEach(col=>{
+    const sw=document.createElement('div');
+    sw.className='color-swatch'+(col===paintColor?' active':'');
+    sw.style.background=col;
+    if(col==='#FFFFFF') sw.style.border='2px solid #ccc';
+    sw.onclick=()=>{
+      paintColor=col; isEraser=false;
+      document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));
+      sw.classList.add('active');
+    };
+    pal.appendChild(sw);
+  });
+
+  // Brushes
+  const brushWrap=document.getElementById('brushes');
+  [6,12,20,32].forEach(sz=>{
+    const btn=document.createElement('div');
+    btn.className='brush-btn'+(sz===paintSize?' active':'');
+    btn.style.cssText=`width:${sz}px;height:${sz}px`;
+    btn.onclick=()=>{
+      paintSize=sz; isEraser=false;
+      document.querySelectorAll('.brush-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    };
+    brushWrap.appendChild(btn);
+  });
+
+  // Canvas setup
+  const canvas=document.getElementById('paint-canvas');
+  canvas.style.maxWidth='100%';
+  canvas.width=Math.min(360,window.innerWidth-40);
+  canvas.height=canvas.width*0.9;
+  paintCtx=canvas.getContext('2d');
+  paintCtx.fillStyle='#FFFFF0';
+  paintCtx.fillRect(0,0,canvas.width,canvas.height);
+
+  const getPos=(e,rect)=>{
+    const src=e.touches?e.touches[0]:e;
+    return {x:(src.clientX-rect.left)*(canvas.width/rect.width),
+            y:(src.clientY-rect.top)*(canvas.height/rect.height)};
+  };
+  let last=null;
+
+  const startDraw=e=>{
+    e.preventDefault();
+    paintDrawing=true;
+    const r=canvas.getBoundingClientRect();
+    const p=getPos(e,r);
+    if(selectedSticker){
+      paintCtx.font=`${paintSize*2+20}px serif`;
+      paintCtx.fillText(selectedSticker,p.x-15,p.y+15);
+      return;
+    }
+    last=p;
+    paintCtx.beginPath(); paintCtx.moveTo(p.x,p.y);
+  };
+  const moveDraw=e=>{
+    if(!paintDrawing||selectedSticker)return;
+    e.preventDefault();
+    const r=canvas.getBoundingClientRect();
+    const p=getPos(e,r);
+    paintCtx.lineWidth=isEraser?paintSize*2:paintSize;
+    paintCtx.lineCap='round'; paintCtx.lineJoin='round';
+    paintCtx.strokeStyle=isEraser?'#FFFFF0':paintColor;
+    if(last){paintCtx.lineTo(p.x,p.y);paintCtx.stroke();}
+    paintCtx.beginPath(); paintCtx.moveTo(p.x,p.y);
+    last=p;
+  };
+  const endDraw=()=>{paintDrawing=false;last=null;};
+
+  canvas.addEventListener('mousedown',startDraw);
+  canvas.addEventListener('mousemove',moveDraw);
+  canvas.addEventListener('mouseup',endDraw);
+  canvas.addEventListener('touchstart',startDraw,{passive:false});
+  canvas.addEventListener('touchmove',moveDraw,{passive:false});
+  canvas.addEventListener('touchend',endDraw);
+
+  // Stickers
+  const sg=document.getElementById('sticker-grid');
+  STICKERS.forEach(s=>{
+    const el=document.createElement('div');
+    el.className='sticker'+(s===selectedSticker?' sel-sticker':'');
+    el.textContent=s;
+    el.onclick=()=>{
+      selectedSticker=selectedSticker===s?null:s;
+      document.querySelectorAll('.sticker').forEach(x=>x.classList.remove('sel-sticker'));
+      if(selectedSticker) el.classList.add('sel-sticker');
+    };
+    sg.appendChild(el);
+  });
+}
+
+function toggleEraser(){isEraser=!isEraser; selectedSticker=null;}
+function clearPaint(){
+  if(paintCtx){paintCtx.fillStyle='#FFFFF0';paintCtx.fillRect(0,0,paintCtx.canvas.width,paintCtx.canvas.height);}
+}
+function fillCanvas(){
+  if(paintCtx){paintCtx.fillStyle=paintColor;paintCtx.fillRect(0,0,paintCtx.canvas.width,paintCtx.canvas.height);}
+}
+function savePaint(){
+  const canvas=document.getElementById('paint-canvas');
+  if(!canvas)return;
+  const a=document.createElement('a');
+  a.download='my-painting.png'; a.href=canvas.toDataURL();
+  a.click(); addStars(3);
+}
+
+// ── Rhymes ────────────────────────────────────────────────────
+function renderRhyme(c){
+  c.innerHTML=`<p style="text-align:center;font-weight:800;font-size:1rem;color:#555;margin-bottom:10px">
+    Tap a rhyme to sing along! 🎵</p>`;
+  RHYMES.forEach(r=>{
+    const card=document.createElement('div');
+    card.className='rhyme-card';
+    card.style.borderLeftColor=r.c;
+    card.innerHTML=`<div><div class="rhyme-emoji">${r.e}</div>
+      <div class="rhyme-title" style="color:${r.c}">${r.title}</div>
+      <div class="rhyme-text">${r.text}</div></div>`;
+    card.onclick=()=>{
+      speak(r.text.replace(/\n/g,' '), 0.8, 1.1);
+      addStars(1);
+    };
+    c.appendChild(card);
+  });
+}
+
+// ── Quiz ──────────────────────────────────────────────────────
+let shuffledQuiz=[];
+function renderQuiz(c){
+  if(shuffledQuiz.length===0) shuffledQuiz=[...QUIZ_QUESTIONS].sort(()=>Math.random()-.5);
+  if(quizIndex>=shuffledQuiz.length){
+    c.innerHTML=`<div class="quiz-card">
+      <div style="font-size:3rem">🎉</div>
+      <h2 style="margin:10px 0">Quiz Complete!</h2>
+      <p>You scored <b style="color:#E67E22;font-size:1.3rem">${quizScore}</b> out of ${shuffledQuiz.length}!</p>
+      <button class="say-btn" style="margin-top:14px" onclick="quizIndex=0;quizScore=0;shuffledQuiz=[];renderQuiz(document.getElementById('content'))">Play Again 🔄</button>
+    </div>`; return;
+  }
+  const q=shuffledQuiz[quizIndex];
+  const opts=[q.correct,...q.wrong].sort(()=>Math.random()-.5);
+  c.innerHTML=`<div class="quiz-card">
+    <div class="quiz-progress">Question ${quizIndex+1} / ${shuffledQuiz.length} · Score: ${quizScore}</div>
+    <div class="quiz-emoji">${q.emoji}</div>
+    <div class="quiz-question">${q.q}</div>
+    <div class="quiz-options" id="quiz-opts"></div>
+    <div class="quiz-feedback" id="quiz-fb"></div>
+  </div>`;
+  const optsEl=document.getElementById('quiz-opts');
+  opts.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.className='quiz-opt'; btn.textContent=opt;
+    btn.onclick=()=>{
+      document.querySelectorAll('.quiz-opt').forEach(b=>b.onclick=null);
+      if(opt===q.correct){
+        btn.classList.add('correct');
+        document.getElementById('quiz-fb').innerHTML='✅ Correct! 🌟';
+        quizScore++; addStars(2);
+        speak('Correct! Well done!',0.9,1.2);
+      } else {
+        btn.classList.add('wrong');
+        document.getElementById('quiz-fb').innerHTML=`❌ The answer was: <b>${q.correct}</b>`;
+        document.querySelectorAll('.quiz-opt').forEach(b=>{if(b.textContent===q.correct)b.classList.add('correct');});
+        speak('Try again next time!',0.9,1.1);
+      }
+      setTimeout(()=>{ quizIndex++; renderQuiz(document.getElementById('content')); },1400);
+    };
+    optsEl.appendChild(btn);
+  });
+}
+
+// ── Animals ───────────────────────────────────────────────────
+function renderAnimals(c){
+  c.innerHTML=`<p style="text-align:center;font-weight:800;font-size:1rem;color:#555;margin-bottom:10px">
+    Tap an animal to hear its sound! 🦁</p>
+  <div class="animal-grid" id="animal-grid"></div>`;
+  const grid=document.getElementById('animal-grid');
+  const colors=['#E74C3C','#E67E22','#F1C40F','#2ECC71','#1ABC9C','#3498DB','#9B59B6','#FF69B4'];
+  ANIMALS.forEach((a,i)=>{
+    const d=document.createElement('div');
+    d.className='animal-card';
+    d.style.borderBottomColor=colors[i%colors.length];
+    d.innerHTML=`<div class="animal-emoji">${a.e}</div><div class="animal-name">${a.n}</div>`;
+    d.onclick=()=>{
+      speak(`${a.n}. ${a.s}. Fun fact: ${a.fact}`, 0.85, 1.1);
+      addStars(1);
+      // Show tooltip
+      const tip=document.createElement('div');
+      tip.style.cssText=`position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:10px 16px;border-radius:14px;font-size:.85rem;max-width:280px;text-align:center;z-index:500;animation:toastIn .3s ease`;
+      tip.innerHTML=`<b>${a.e} ${a.n}</b> says: <i>${a.s}</i><br><small>${a.fact}</small>`;
+      document.body.appendChild(tip);
+      setTimeout(()=>tip.remove(),3500);
+    };
+    grid.appendChild(d);
+  });
+}
+
+// ── Start ─────────────────────────────────────────────────────
+document.getElementById('star-total').textContent=totalStars;
+render();
+</script>
+</body>
+</html>
