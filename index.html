@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>🌈 ABC World — Kids Learning Adventure</title>
+<title>🌈 ABC World — Learn, Play & Discover!</title>
 <style>
 * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 :root {
@@ -249,7 +249,7 @@ body {
 
 <div id="app">
   <div class="topbar">
-    <div class="logo">🌈 ABC <span>World</span></div>
+    <div class="logo">🌈 ABC <span>World</span> ✨</div>
     <div class="stars-count">⭐ <span id="star-total">0</span> stars</div>
   </div>
 
@@ -284,6 +284,166 @@ body {
 </div>
 
 <script>
+
+// ═══════════════════════════════════════════════════════════════
+//  ABC WORLD — Sound Engine
+//  Cute kid voice via Web Speech API (pitch=1.6, rate=0.85)
+//  Animal sounds via Web Audio API synthesis
+// ═══════════════════════════════════════════════════════════════
+const KidsCtx = window.AudioContext || window.webkitAudioContext;
+let kctx = null;
+function getKCtx() { if(!kctx) kctx = new KidsCtx(); return kctx; }
+document.addEventListener('click',()=>{if(kctx&&kctx.state==='suspended')kctx.resume();},{once:true});
+
+// 🎤 Kid Voice TTS — very high pitch, slow, excited
+function kidSpeak(text, lang='en-US') {
+  if(!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang;
+  u.rate = 0.82;
+  u.pitch = 1.7;   // Very high = cute child voice
+  u.volume = 1.0;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+// 🎵 Playful tone helper
+function kidTone(freq, type='sine', dur=0.15, vol=0.3, delay=0) {
+  try {
+    const ctx=getKCtx();
+    const o=ctx.createOscillator(); const g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type=type; o.frequency.setValueAtTime(freq,ctx.currentTime+delay);
+    g.gain.setValueAtTime(vol,ctx.currentTime+delay);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay+dur);
+    o.start(ctx.currentTime+delay); o.stop(ctx.currentTime+delay+dur+0.05);
+  } catch(e){}
+}
+
+// ⭐ Star reward sound
+function snd_star() {
+  [523,659,784,1047,784,1047,1319].forEach((f,i)=>kidTone(f,'sine',0.12,0.35,i*0.08));
+}
+
+// ✅ Correct answer
+function snd_correct() {
+  kidTone(659,'sine',0.1,0.4); kidTone(784,'sine',0.1,0.4,0.1); kidTone(1047,'sine',0.15,0.4,0.2);
+}
+
+// ❌ Wrong answer  
+function snd_wrong() {
+  kidTone(300,'sawtooth',0.15,0.3); kidTone(250,'sawtooth',0.15,0.3,0.15);
+}
+
+// 🖌️ Paint stroke sound
+function snd_paint() { kidTone(400+Math.random()*200,'sine',0.06,0.15); }
+
+// 🎉 Celebration fanfare
+function snd_celebrate() {
+  const notes=[523,523,523,415,523,659,523,659,784,659,784,1047];
+  notes.forEach((f,i)=>kidTone(f,'sine',0.12,0.4,i*0.09));
+}
+
+// 🐾 ANIMAL SOUNDS via Web Audio synthesis (not human!)
+const ANIMAL_SOUNDS = {
+  '🐶': function() { // Dog: woof - low bark
+    kidTone(220,'sawtooth',0.08,0.7); kidTone(180,'sawtooth',0.1,0.6,0.1);
+    kidTone(220,'sawtooth',0.06,0.5,0.25);
+  },
+  '🐱': function() { // Cat: meow - rising then falling
+    const ctx=getKCtx();
+    const o=ctx.createOscillator(); const g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.type='sine';
+    o.frequency.setValueAtTime(400,ctx.currentTime);
+    o.frequency.linearRampToValueAtTime(600,ctx.currentTime+0.15);
+    o.frequency.linearRampToValueAtTime(350,ctx.currentTime+0.4);
+    g.gain.setValueAtTime(0.5,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);
+    o.start(); o.stop(ctx.currentTime+0.55);
+  },
+  '🐄': function() { // Cow: moo - deep, long
+    const ctx=getKCtx();
+    const o=ctx.createOscillator(); const g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.type='sawtooth';
+    o.frequency.setValueAtTime(100,ctx.currentTime);
+    o.frequency.linearRampToValueAtTime(120,ctx.currentTime+0.3);
+    o.frequency.linearRampToValueAtTime(90,ctx.currentTime+0.8);
+    g.gain.setValueAtTime(0.6,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+1.0);
+    o.start(); o.stop(ctx.currentTime+1.1);
+  },
+  '🐸': function() { // Frog: ribbit
+    kidTone(150,'square',0.07,0.5); kidTone(200,'square',0.07,0.5,0.1);
+    kidTone(150,'square',0.07,0.5,0.2); kidTone(200,'square',0.07,0.5,0.3);
+  },
+  '🐝': function() { // Bee: buzz
+    const ctx=getKCtx();
+    const o=ctx.createOscillator(); const g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.type='sawtooth';
+    o.frequency.setValueAtTime(200,ctx.currentTime);
+    const lfo=ctx.createOscillator(); const lfog=ctx.createGain();
+    lfo.connect(lfog); lfog.connect(o.frequency);
+    lfo.frequency.setValueAtTime(30,ctx.currentTime); lfog.gain.setValueAtTime(20,ctx.currentTime);
+    g.gain.setValueAtTime(0.4,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.6);
+    lfo.start(); o.start(); lfo.stop(ctx.currentTime+0.65); o.stop(ctx.currentTime+0.65);
+  },
+  '🦁': function() { // Lion: roar
+    kidTone(60,'sawtooth',0.4,0.8);
+    kidTone(80,'sawtooth',0.3,0.6,0.1);
+    kidTone(50,'sawtooth',0.5,0.7,0.2);
+    kidTone(70,'sawtooth',0.3,0.5,0.5);
+  },
+  '🐧': function() { // Penguin: honk
+    kidTone(350,'square',0.08,0.5); kidTone(280,'square',0.1,0.5,0.1);
+    kidTone(350,'square',0.08,0.5,0.25);
+  },
+  '🐘': function() { // Elephant: trumpet
+    const ctx=getKCtx();
+    const o=ctx.createOscillator(); const g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.type='sawtooth';
+    o.frequency.setValueAtTime(200,ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(800,ctx.currentTime+0.3);
+    o.frequency.exponentialRampToValueAtTime(600,ctx.currentTime+0.5);
+    g.gain.setValueAtTime(0.7,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.7);
+    o.start(); o.stop(ctx.currentTime+0.8);
+  },
+  '🐍': function() { // Snake: hiss
+    const ctx=getKCtx();
+    const buf=ctx.createBuffer(1,ctx.sampleRate*0.5,ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*0.3;
+    const src=ctx.createBufferSource();
+    const flt=ctx.createBiquadFilter(); flt.type='highpass'; flt.frequency.value=2000;
+    src.buffer=buf; src.connect(flt); flt.connect(ctx.destination); src.start();
+  },
+  '🐬': function() { // Dolphin: click
+    for(let i=0;i<5;i++) kidTone(1200+i*200,'sine',0.03,0.3,i*0.04);
+  },
+  '🦋': function() { // Butterfly: flutter (gentle)
+    [600,700,650,750].forEach((f,i)=>kidTone(f,'sine',0.05,0.15,i*0.06));
+  },
+  '🦓': function() { // Zebra: bark
+    kidTone(300,'sawtooth',0.1,0.5); kidTone(250,'sawtooth',0.08,0.4,0.15);
+  },
+  'default': function() {
+    kidTone(440,'sine',0.1,0.3); kidTone(550,'sine',0.1,0.3,0.1);
+  }
+};
+
+function playAnimalSound(emoji) {
+  const fn = ANIMAL_SOUNDS[emoji] || ANIMAL_SOUNDS['default'];
+  fn();
+}
+
+// 🔤 Letter celebration
+function snd_letter() {
+  const melody=[523,659,784];
+  melody.forEach((f,i)=>kidTone(f,'sine',0.1,0.4,i*0.1));
+}
+
+// 🔢 Number sound (count + tone)
+function snd_number(n) {
+  for(let i=0;i<Math.min(n,5);i++) kidTone(400+i*80,'sine',0.08,0.3,i*0.1);
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  ABC WORLD — Kids Learning Game
 // ═══════════════════════════════════════════════════════════════
@@ -416,7 +576,7 @@ let paintDrawing = false;
 let traceCtx = null;
 let paintCtx = null;
 
-function addStars(n){
+function addStars(n){ snd_star();
   totalStars += n;
   localStorage.setItem('kids_stars',totalStars);
   document.getElementById('star-total').textContent = totalStars;
@@ -428,13 +588,7 @@ function addStars(n){
 }
 
 // ── Speak ─────────────────────────────────────────────────────
-function speak(text, rate=0.85, pitch=1.2){
-  if(!window.speechSynthesis) return;
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate=rate; u.pitch=pitch; u.lang='en-US';
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
-}
+function speak(text, rate=0.85, pitch=1.2){ kidSpeak(text); }
 function speakLetter(){ if(currentLetter) speak(currentLetter.l, 0.7, 1.3); }
 function speakWord(){   if(currentLetter) speak(currentLetter.w, 0.85, 1.2); }
 
@@ -510,7 +664,7 @@ function openLetter(l){
   canvas.ontouchmove=e=>{e.preventDefault();const r=canvas.getBoundingClientRect();const t=e.touches[0];draw(t.clientX-r.left,t.clientY-r.top);};
   canvas.ontouchend=()=>{tracePainting=false;};
 
-  speak(l.l, 0.7, 1.3);
+  snd_letter(); kidSpeak(l.l);
   addStars(1);
 }
 
@@ -546,7 +700,7 @@ function renderNumbers(c){
         <div style="font-size:.85rem;color:#666;font-style:italic">${n.s}</div>
       </div>`;
     card.onclick=()=>{
-      speak(`${n.n}. ${n.w}. ${n.s}`, 0.85, 1.1);
+      snd_number(parseInt(n.n)||1); setTimeout(()=>kidSpeak(n.n+'. '+n.w+'. '+n.s),300);
       addStars(1);
       card.style.transform='scale(1.02)';
       setTimeout(()=>card.style.transform='',300);
@@ -637,6 +791,7 @@ function renderPaint(c){
   };
   const moveDraw=e=>{
     if(!paintDrawing||selectedSticker)return;
+    if(Math.random()<0.1) snd_paint();
     e.preventDefault();
     const r=canvas.getBoundingClientRect();
     const p=getPos(e,r);
@@ -698,7 +853,8 @@ function renderRhyme(c){
       <div class="rhyme-title" style="color:${r.c}">${r.title}</div>
       <div class="rhyme-text">${r.text}</div></div>`;
     card.onclick=()=>{
-      speak(r.text.replace(/\n/g,' '), 0.8, 1.1);
+      snd_star();
+      kidSpeak(r.text.replace(/\n/g,' '));
       addStars(1);
     };
     c.appendChild(card);
@@ -733,12 +889,14 @@ function renderQuiz(c){
     btn.onclick=()=>{
       document.querySelectorAll('.quiz-opt').forEach(b=>b.onclick=null);
       if(opt===q.correct){
+        snd_correct();
         btn.classList.add('correct');
         document.getElementById('quiz-fb').innerHTML='✅ Correct! 🌟';
         quizScore++; addStars(2);
         speak('Correct! Well done!',0.9,1.2);
       } else {
         btn.classList.add('wrong');
+        snd_wrong();
         document.getElementById('quiz-fb').innerHTML=`❌ The answer was: <b>${q.correct}</b>`;
         document.querySelectorAll('.quiz-opt').forEach(b=>{if(b.textContent===q.correct)b.classList.add('correct');});
         speak('Try again next time!',0.9,1.1);
@@ -762,7 +920,8 @@ function renderAnimals(c){
     d.style.borderBottomColor=colors[i%colors.length];
     d.innerHTML=`<div class="animal-emoji">${a.e}</div><div class="animal-name">${a.n}</div>`;
     d.onclick=()=>{
-      speak(`${a.n}. ${a.s}. Fun fact: ${a.fact}`, 0.85, 1.1);
+      playAnimalSound(a.e);
+      setTimeout(()=>kidSpeak(a.n+'. '+a.s+'. Fun fact: '+a.fact),600);
       addStars(1);
       // Show tooltip
       const tip=document.createElement('div');
