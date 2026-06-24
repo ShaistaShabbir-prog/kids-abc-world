@@ -1,0 +1,20 @@
+{
+  "name": "ABC World — Kids Learning",
+  "short_name": "ABC World",
+  "description": "Kids alphabet learning adventure. ABC, numbers, painting, rhymes, animals and quiz for ages 3-8.",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "portrait-primary",
+  "background_color": "#1a0a2e",
+  "theme_color": "#FF69B4",
+  "lang": "en",
+  "icons": [
+    { "src": "https://img.icons8.com/emoji/192/rainbow-emoji.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "https://img.icons8.com/emoji/512/rainbow-emoji.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["education", "kids", "games"],
+  "shortcuts": [
+    { "name": "Learn ABCs", "url": "./?mode=abc", "description": "Start learning the alphabet" },
+    { "name": "Painting", "url": "./?mode=paint", "description": "Open the painting canvas" }
+  ]
+}
