@@ -239,6 +239,10 @@ body {
 .bnav-btn span:first-child { font-size:1.3rem; }
 .bnav-btn.active { color:#E74C3C; background:rgba(231,76,60,.1); }
 </style>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#FF69B4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ABC World">
 </head>
 <body>
 
@@ -938,5 +942,6 @@ function renderAnimals(c){
 document.getElementById('star-total').textContent=totalStars;
 render();
 </script>
+<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
 </body>
 </html>
