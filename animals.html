@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Animal Alphabet | ABC World</title>
+<link rel="manifest" href="./manifest.json">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: linear-gradient(135deg, #1a0a2e 0%, #16213e 100%); min-height: 100vh; font-family: 'Segoe UI', system-ui, sans-serif; }
+h1 { text-align: center; color: #fff; padding: 24px 16px 8px; font-size: clamp(1.5rem,5vw,2.2rem); }
+.subtitle { text-align: center; color: rgba(255,255,255,.5); font-size: .9rem; margin-bottom: 20px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 0 16px 40px; max-width: 900px; margin: 0 auto; }
+.card { background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.12); border-radius: 16px; padding: 14px 10px; text-align: center; cursor: pointer; transition: all .2s; }
+.card:hover, .card:active { transform: scale(1.08); background: rgba(255,255,255,.14); border-color: #a78bfa; }
+.letter { font-size: 1.8rem; font-weight: 900; color: #a78bfa; line-height: 1; margin-bottom: 4px; }
+.animal { font-size: 2.4rem; margin: 6px 0; }
+.name { font-size: .75rem; color: rgba(255,255,255,.7); font-weight: 700; }
+.fact { font-size: .65rem; color: rgba(255,255,255,.35); margin-top: 3px; line-height: 1.4; }
+.back { display: flex; justify-content: center; padding: 8px; }
+.back a { color: #a78bfa; text-decoration: none; font-size: .85rem; }
+</style>
+</head>
+<body>
+<div class="back"><a href="index.html">← Back to ABC World</a></div>
+<h1>🐾 Animal Alphabet</h1>
+<p class="subtitle">Click any animal to hear its name!</p>
+<div class="grid" id="animals-grid"></div>
+<script>
+const ANIMALS = [
+  {l:'A',e:'🐜',n:'Ant',    f:'Ants can carry 50× their weight!'},
+  {l:'B',e:'🐻',n:'Bear',   f:'Bears can run 35 mph!'},
+  {l:'C',e:'🐱',n:'Cat',    f:'Cats sleep 12–16 hours a day'},
+  {l:'D',e:'🐶',n:'Dog',    f:'Dogs have 300 million scent receptors'},
+  {l:'E',e:'🐘',n:'Elephant',f:'Elephants never forget!'},
+  {l:'F',e:'🐸',n:'Frog',   f:'Frogs drink through their skin'},
+  {l:'G',e:'🦒',n:'Giraffe', f:'Giraffes have 7 neck vertebrae like us'},
+  {l:'H',e:'🐴',n:'Horse',  f:'Horses can sleep standing up'},
+  {l:'I',e:'🦎',n:'Iguana', f:'Iguanas can hold breath for 30 min'},
+  {l:'J',e:'🐆',n:'Jaguar', f:'Jaguars love swimming!'},
+  {l:'K',e:'🦘',n:'Kangaroo',f:'Baby kangaroos are tiny as a grape'},
+  {l:'L',e:'🦁',n:'Lion',   f:'Lions sleep up to 20 hours a day'},
+  {l:'M',e:'🐒',n:'Monkey', f:'Monkeys can recognise themselves in mirrors'},
+  {l:'N',e:'🦬',n:'Newt',   f:'Newts can regrow lost limbs!'},
+  {l:'O',e:'🦉',n:'Owl',    f:'Owls can rotate heads 270°'},
+  {l:'P',e:'🐼',n:'Panda',  f:'Pandas eat 30kg of bamboo daily'},
+  {l:'Q',e:'🦜',n:'Quail',  f:'Quails can run 12 mph!'},
+  {l:'R',e:'🐰',n:'Rabbit', f:'Rabbits can jump 9 feet in one leap'},
+  {l:'S',e:'🐍',n:'Snake',  f:'Snakes smell with their tongues'},
+  {l:'T',e:'🐯',n:'Tiger',  f:'No two tigers have the same stripes'},
+  {l:'U',e:'🦄',n:'Unicorn',f:'A symbol of magic and wonder ✨'},
+  {l:'V',e:'🦇',n:'Vampire Bat',f:'Only bat that can walk on ground'},
+  {l:'W',e:'🐺',n:'Wolf',   f:'Wolves howl to communicate'},
+  {l:'X',e:'🦬',n:'Xerus',  f:'A type of African ground squirrel'},
+  {l:'Y',e:'🦬',n:'Yak',    f:'Yaks can live above 5000m altitude'},
+  {l:'Z',e:'🦓',n:'Zebra',  f:'Every zebra has unique stripes'},
+];
+
+const grid = document.getElementById('animals-grid');
+ANIMALS.forEach(a => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `<div class="letter">${a.l}</div><div class="animal">${a.e}</div><div class="name">${a.n}</div><div class="fact">${a.f}</div>`;
+  card.onclick = () => {
+    if('speechSynthesis' in window){
+      const u = new SpeechSynthesisUtterance(a.n);
+      u.lang = 'en-US'; speechSynthesis.speak(u);
+    }
+    card.style.borderColor = '#fbbf24';
+    setTimeout(() => card.style.borderColor = 'rgba(255,255,255,.12)', 600);
+  };
+  grid.appendChild(card);
+});
+</script>
+</body>
+</html>
