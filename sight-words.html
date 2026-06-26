@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sight Words | ABC World</title>
+  <link rel="manifest" href="./manifest.json">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:linear-gradient(135deg,#1a0a2e,#2d1b4e);min-height:100vh;font-family:'Comic Sans MS',cursive;color:#fff}
+    h1{text-align:center;padding:20px;font-size:2rem;background:linear-gradient(90deg,#ff6b9d,#c084fc,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .word-card{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:20px;padding:30px;text-align:center;cursor:pointer;transition:all .2s;margin:10px;display:inline-block;min-width:140px}
+    .word-card:hover{transform:scale(1.08);background:rgba(255,255,255,.2)}
+    .word-card .word{font-size:2.5rem;font-weight:900;color:#fbbf24}
+    .grid{display:flex;flex-wrap:wrap;justify-content:center;padding:16px;max-width:700px;margin:0 auto}
+    .tabs{display:flex;justify-content:center;gap:8px;padding:16px;flex-wrap:wrap}
+    .tab-btn{padding:8px 18px;border-radius:20px;border:none;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;font-weight:700}
+    .tab-btn.active{background:#7c3aed}
+  </style>
+</head>
+<body>
+  <h1>🔤 Sight Words</h1>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showLevel('pre-primer',this)">Pre-Primer</button>
+    <button class="tab-btn" onclick="showLevel('primer',this)">Primer</button>
+    <button class="tab-btn" onclick="showLevel('grade1',this)">Grade 1</button>
+  </div>
+  <div class="grid" id="word-grid"></div>
+  <script>
+  const WORDS = {
+    'pre-primer': ['the','a','to','and','I','it','in','is','you','of','he','was','for','that','on','are','as','with','his','they'],
+    'primer':     ['at','be','but','came','did','do','eat','four','get','have','he','into','like','must','new','no','now','on','our','out'],
+    'grade1':     ['after','again','an','any','ask','by','could','every','fly','from','give','going','had','has','her','him','how','just','know','let'],
+  };
+  function showLevel(level, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const grid = document.getElementById('word-grid');
+    grid.innerHTML = WORDS[level].map(w => `
+      <div class="word-card" onclick="speak('${w}')" role="button" aria-label="Sight word: ${w}">
+        <div class="word">${w}</div>
+        <div style="font-size:.7rem;color:rgba(255,255,255,.5);margin-top:6px">tap to hear</div>
+      </div>`).join('');
+  }
+  function speak(word) {
+    if ('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance(word);
+      u.lang = 'en-US'; u.rate = 0.7;
+      speechSynthesis.speak(u);
+    }
+  }
+  showLevel('pre-primer', document.querySelector('.tab-btn'));
+  </script>
+</body>
+</html>
