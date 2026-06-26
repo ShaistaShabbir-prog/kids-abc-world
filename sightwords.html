@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sight Words | ABC World</title>
+<link rel="manifest" href="./manifest.json">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); min-height: 100vh; font-family: 'Segoe UI', system-ui, sans-serif; color: #fff; }
+.header { text-align: center; padding: 20px 16px 10px; }
+h1 { font-size: clamp(1.4rem,4vw,2rem); margin-bottom: 6px; }
+.mode-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
+.mode-btn { padding: 8px 18px; border-radius: 20px; border: 1.5px solid rgba(255,255,255,.2); background: rgba(255,255,255,.07); color: #fff; cursor: pointer; font-size: .85rem; font-weight: 700; transition: all .15s; }
+.mode-btn.active { background: #7c3aed; border-color: #7c3aed; }
+#flashcard { display: flex; flex-direction: column; align-items: center; padding: 30px 16px; }
+.card { background: rgba(255,255,255,.1); border: 2px solid rgba(255,255,255,.2); border-radius: 24px; padding: 40px 60px; text-align: center; cursor: pointer; min-width: 240px; transition: transform .15s; }
+.card:hover { transform: scale(1.03); }
+.word { font-size: clamp(2.5rem,10vw,5rem); font-weight: 900; letter-spacing: .05em; }
+.nav-btns { display: flex; gap: 14px; margin-top: 24px; }
+.nav-btn { padding: 12px 28px; border-radius: 50px; border: none; font-size: 1rem; font-weight: 800; cursor: pointer; }
+.progress { color: rgba(255,255,255,.5); font-size: .85rem; margin-top: 16px; }
+.back { padding: 8px 16px; }
+.back a { color: #a78bfa; font-size: .85rem; }
+</style>
+</head>
+<body>
+<div class="back"><a href="index.html">← Back to ABC World</a></div>
+<div class="header">
+  <h1>👁️ Sight Words</h1>
+  <p style="color:rgba(255,255,255,.5);font-size:.85rem">Tap the word to hear it. Use arrows to navigate.</p>
+  <div class="mode-btns">
+    <button class="mode-btn active" onclick="setLevel('pre-primer')">Pre-Primer</button>
+    <button class="mode-btn" onclick="setLevel('primer')">Primer</button>
+    <button class="mode-btn" onclick="setLevel('grade1')">Grade 1</button>
+  </div>
+</div>
+<div id="flashcard">
+  <div class="card" id="word-card" onclick="speak()">
+    <div class="word" id="word-display">the</div>
+    <div style="font-size:.8rem;color:rgba(255,255,255,.4);margin-top:8px">Tap to hear it</div>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn" onclick="prev()" style="background:rgba(255,255,255,.12);color:#fff">←</button>
+    <button class="nav-btn" onclick="next()" style="background:#7c3aed;color:#fff">→</button>
+  </div>
+  <div class="progress" id="progress">1 / 40</div>
+</div>
+<script>
+const WORDS = {
+  'pre-primer': ['the','a','to','and','I','it','in','is','you','of','he','was','for','on','are','as','with','his','they','at','be','this','have','from','or','one','had','by','word','but','not','what','all','were','we','when','your','can','said','there'],
+  'primer': ['about','above','across','after','again','against','along','am','an','any','because','been','between','both','came','come','could','did','do','eat','four','get','go','got','grow','how','if','its','just','know','like','little','long','look','made','many','more','much','must','my'],
+  'grade1': ['also','always','another','away','back','big','black','blue','boy','call','city','close','color','day','did','dig','dog','door','draw','drink','drove','earth','eat','end','enough','eye','face','family','far','fast','father','feet','fell','felt','field','find','fire','first','fish','five']
+};
+
+let level = 'pre-primer', idx = 0;
+
+function setLevel(l) {
+  level = l; idx = 0; update();
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.onclick.toString().includes(l)));
+}
+function update() {
+  const words = WORDS[level];
+  document.getElementById('word-display').textContent = words[idx];
+  document.getElementById('progress').textContent = `${idx+1} / ${words.length}`;
+}
+function next() { const w=WORDS[level]; idx=(idx+1)%w.length; update(); speak(); }
+function prev() { const w=WORDS[level]; idx=(idx-1+w.length)%w.length; update(); speak(); }
+function speak() {
+  const w = WORDS[level][idx];
+  if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(w);u.lang='en-US';u.rate=0.8;speechSynthesis.speak(u);}
+  const card = document.getElementById('word-card');
+  card.style.borderColor='#fbbf24';
+  setTimeout(()=>card.style.borderColor='rgba(255,255,255,.2)',400);
+}
+update();
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')next();if(e.key==='ArrowLeft')prev();});
+</script>
+</body>
+</html>
