@@ -299,6 +299,97 @@ let kctx = null;
 function getKCtx() { if(!kctx) kctx = new KidsCtx(); return kctx; }
 document.addEventListener('click',()=>{if(kctx&&kctx.state==='suspended')kctx.resume();},{once:true});
 
+
+// 🎵 Rhyme reader — speaks line by line with natural pauses
+// Children can follow along as each line is read slowly
+function speakRhymeLineByLine(text, title) {
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+
+  const lines = text
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
+
+  if (!lines.length) return;
+
+  // Get a nice voice
+  function getVoice() {
+    const voices = speechSynthesis.getVoices();
+    return voices.find(v =>
+      v.lang.startsWith('en') && (
+        v.name.includes('Samantha') ||
+        v.name.includes('Google US English') ||
+        v.name.includes('Microsoft Aria') ||
+        v.name.includes('Karen')
+      )
+    ) || voices.find(v => v.lang.startsWith('en') && v.default)
+      || voices.find(v => v.lang.startsWith('en'));
+  }
+
+  // Speak title first
+  const titleUtterance = new SpeechSynthesisUtterance(title);
+  titleUtterance.rate = 0.80;
+  titleUtterance.pitch = 1.05;
+  titleUtterance.volume = 0.9;
+  titleUtterance.lang = 'en-US';
+  const voice = getVoice();
+  if (voice) titleUtterance.voice = voice;
+
+  // Queue each line
+  const utterances = [titleUtterance];
+  lines.forEach((line, i) => {
+    const u = new SpeechSynthesisUtterance(line);
+    u.rate = 0.78;     // slow — children can follow
+    u.pitch = 1.0;     // natural
+    u.volume = 0.9;
+    u.lang = 'en-US';
+    if (voice) u.voice = voice;
+
+    // Add longer pause after every 2nd line (rhyme couplet)
+    // achieved by appending silence via an empty utterance
+    utterances.push(u);
+
+    if ((i + 1) % 2 === 0 && i < lines.length - 1) {
+      const pause = new SpeechSynthesisUtterance(' ');
+      pause.rate = 0.1;
+      pause.volume = 0;
+      if (voice) pause.voice = voice;
+      utterances.push(pause);
+    }
+  });
+
+  // Highlight each line as it's spoken
+  let lineIdx = -1;
+  function speakNext() {
+    lineIdx++;
+    if (lineIdx >= utterances.length) return;
+    const u = utterances[lineIdx];
+    u.onend = speakNext;
+    speechSynthesis.speak(u);
+
+    // Highlight current rhyme line in the UI
+    const rhymeTextEl = document.querySelector('.rhyme-text');
+    if (rhymeTextEl && lineIdx > 0) {
+      const realLineIdx = utterances
+        .slice(0, lineIdx)
+        .filter(u => u.text && u.text.trim() && u.text !== ' ' && u.text !== title)
+        .length;
+      const lineEls = rhymeTextEl.querySelectorAll('.rhyme-line');
+      lineEls.forEach((el, i) => {
+        el.style.background = i === realLineIdx - 1
+          ? 'linear-gradient(90deg, #FFD700, #FFA500)'
+          : 'transparent';
+        el.style.borderRadius = '6px';
+        el.style.padding = '2px 4px';
+        el.style.transition = 'background 0.3s';
+      });
+    }
+  }
+
+  setTimeout(speakNext, 80);
+}
+
 // 🎤 Kid Voice TTS — natural, pleasant child-friendly voice
 function kidSpeak(text, lang='en-US') {
   if(!window.speechSynthesis) return;
@@ -910,10 +1001,14 @@ function renderRhyme(c){
     card.style.borderLeftColor=r.c;
     card.innerHTML=`<div><div class="rhyme-emoji">${r.e}</div>
       <div class="rhyme-title" style="color:${r.c}">${r.title}</div>
-      <div class="rhyme-text">${r.text}</div></div>`;
+      <div class="rhyme-text">${
+        r.text.split('\n').filter(l=>l.trim()).map(l=>
+          `<span class="rhyme-line" style="display:block;padding:2px 4px;margin:1px 0">${l}</span>`
+        ).join('')
+      }</div></div>`;
     card.onclick=()=>{
       snd_star();
-      kidSpeak(r.text.replace(/\n/g,' '));
+      speakRhymeLineByLine(r.text, r.title);
       addStars(1);
     };
     c.appendChild(card);
