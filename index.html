@@ -299,16 +299,57 @@ let kctx = null;
 function getKCtx() { if(!kctx) kctx = new KidsCtx(); return kctx; }
 document.addEventListener('click',()=>{if(kctx&&kctx.state==='suspended')kctx.resume();},{once:true});
 
-// 🎤 Kid Voice TTS — very high pitch, slow, excited
+// 🎤 Kid Voice TTS — natural, pleasant child-friendly voice
 function kidSpeak(text, lang='en-US') {
   if(!window.speechSynthesis) return;
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang;
-  u.rate = 0.88;  // Natural speaking pace for kids
-  u.pitch = 1.15;  // Gentle, natural child-friendly pitch
-  u.volume = 1.0;
   speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+
+  // Small delay — lets cancel() finish before speaking
+  setTimeout(() => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.rate = 0.82;    // Slow and clear — easy for children to follow
+    u.pitch = 1.0;    // Natural pitch — NOT chipmunk/robotic
+    u.volume = 0.90;  // Comfortable volume
+
+    // Prefer a female voice if available (more natural for kids' apps)
+    const voices = speechSynthesis.getVoices();
+    const preferred = voices.find(v =>
+      v.lang.startsWith('en') && (
+        v.name.includes('Samantha') ||  // macOS/iOS
+        v.name.includes('Google US English') ||
+        v.name.includes('Microsoft Aria') ||
+        v.name.includes('Female') ||
+        v.name.includes('female')
+      )
+    ) || voices.find(v => v.lang.startsWith('en') && v.default)
+      || voices.find(v => v.lang.startsWith('en'));
+
+    if (preferred) u.voice = preferred;
+    speechSynthesis.speak(u);
+  }, 80);
+}
+
+// Speak letter name clearly with a pause (e.g. "A ... Apple")
+function kidSpeakLetterAndWord(letter, word) {
+  if(!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  setTimeout(() => {
+    // First utterance: just the letter
+    const u1 = new SpeechSynthesisUtterance(letter);
+    u1.rate = 0.75; u1.pitch = 1.0; u1.volume = 0.9;
+
+    // Second utterance: word after pause
+    const u2 = new SpeechSynthesisUtterance(word);
+    u2.rate = 0.80; u2.pitch = 1.0; u2.volume = 0.9;
+
+    const voices = speechSynthesis.getVoices();
+    const v = voices.find(v => v.lang.startsWith('en') && v.default) || voices[0];
+    if (v) { u1.voice = v; u2.voice = v; }
+
+    speechSynthesis.speak(u1);
+    speechSynthesis.speak(u2);
+  }, 80);
 }
 
 // 🎵 Playful tone helper
@@ -326,7 +367,7 @@ function kidTone(freq, type='sine', dur=0.15, vol=0.3, delay=0) {
 
 // ⭐ Star reward sound
 function snd_star() {
-  [523,659,784,1047,784,1047,1319].forEach((f,i)=>kidTone(f,'sine',0.12,0.35,i*0.08));
+  [523,659,784,1047,784,1047,1319].forEach((f,i)=>kidTone(f,'sine',0.07,0.4,i*0.10));
 }
 
 // ✅ Correct answer
@@ -345,7 +386,7 @@ function snd_paint() { kidTone(400+Math.random()*200,'sine',0.06,0.15); }
 // 🎉 Celebration fanfare
 function snd_celebrate() {
   const notes=[523,523,523,415,523,659,523,659,784,659,784,1047];
-  notes.forEach((f,i)=>kidTone(f,'sine',0.12,0.4,i*0.09));
+  notes.forEach((f,i)=>kidTone(f,'sine',0.07,0.4,i*0.12));
 }
 
 // 🐾 ANIMAL SOUNDS via Web Audio synthesis (not human!)
