@@ -944,5 +944,25 @@ render();
 </script>
 <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
 <script src="js/quiz.js"></script>
+
+<!-- Added navigation to all modules -->
+<script>
+(function() {
+  const nav = document.getElementById('main-nav') || document.querySelector('nav');
+  const links = [
+    { href: 'animals.html', text: '🐾 Animals' },
+    { href: 'sightwords.html', text: '👁️ Sight Words' },
+    { href: 'quiz.html', text: '🎯 Quiz Time' },
+  ];
+  if (nav) {
+    links.forEach(l => {
+      const a = document.createElement('a');
+      a.href = l.href; a.textContent = l.text;
+      a.style.cssText = 'display:inline-block;padding:0.5rem 1rem;margin:0.25rem;background:#7c3aed;color:white;border-radius:8px;text-decoration:none;font-weight:bold';
+      nav.appendChild(a);
+    });
+  }
+})();
+</script>
 </body>
 </html>
