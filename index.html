@@ -246,6 +246,20 @@ body {
 </head>
 <body>
 
+<div id="progress-ui" style="background:#161b22;border-bottom:1px solid #30363d;padding:0.5rem 1rem;display:flex;align-items:center;gap:1rem">
+  <div style="flex:1">
+    <div style="background:#1e293b;border-radius:20px;height:8px;overflow:hidden">
+      <div id="progress-bar" style="background:linear-gradient(90deg,#7c3aed,#ec4899);height:100%;width:0%;transition:width 0.5s;border-radius:20px"></div>
+    </div>
+    <div id="progress-label" style="color:#8b949e;font-size:0.72rem;margin-top:2px">0/26 letters</div>
+  </div>
+  <div id="total-stars" style="color:#fbbf24;font-weight:700;font-size:0.9rem">⭐ 0</div>
+  <button onclick="document.getElementById('parent-dashboard').style.display=document.getElementById('parent-dashboard').style.display==='none'?'block':'none'"
+    style="background:#7c3aed;color:white;border:none;padding:0.3rem 0.7rem;border-radius:6px;cursor:pointer;font-size:0.75rem">📊</button>
+</div>
+<div id="parent-dashboard" style="display:none"></div>
+
+
 <!-- Floating clouds -->
 <div class="cloud" style="top:8%;animation-duration:25s;animation-delay:0s">☁️</div>
 <div class="cloud" style="top:15%;animation-duration:32s;animation-delay:-10s;font-size:1.5rem">☁️</div>
@@ -1145,5 +1159,6 @@ render();
   }
 })();
 </script>
+<script src="js/progress.js"></script>
 </body>
 </html>
