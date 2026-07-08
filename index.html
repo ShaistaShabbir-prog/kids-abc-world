@@ -1160,5 +1160,22 @@ render();
 })();
 </script>
 <script src="js/progress.js"></script>
+<script src="js/kaw-difficulty.js"></script>
+<script src="js/kaw-multiplayer.js"></script>
+
+<div id="kaw-mode-bar" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  display:flex;gap:10px;z-index:9980;background:rgba(10,10,20,0.92);
+  border-radius:30px;padding:8px 16px;border:1px solid #30363d;box-shadow:0 4px 20px rgba(0,0,0,0.5)">
+  <button onclick="KAWDifficulty.showModal()"
+    style="background:linear-gradient(135deg,#22c55e,#3b82f6);color:#fff;border:none;
+      padding:8px 16px;border-radius:20px;font-weight:700;cursor:pointer;font-size:0.82rem">
+    ⚙️ Age Level
+  </button>
+  <button onclick="KAWMultiplayer.showSetup()"
+    style="background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border:none;
+      padding:8px 16px;border-radius:20px;font-weight:700;cursor:pointer;font-size:0.82rem">
+    👫 2 Players
+  </button>
+</div>
 </body>
 </html>
